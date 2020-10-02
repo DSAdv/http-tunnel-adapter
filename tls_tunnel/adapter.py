@@ -2,8 +2,6 @@ import requests
 
 import requests.cookies
 import requests.utils
-from dataclasses import dataclass
-from urllib.parse import urlparse
 from http.client import HTTPConnection
 from requests.structures import CaseInsensitiveDict
 from requests.adapters import BaseAdapter
