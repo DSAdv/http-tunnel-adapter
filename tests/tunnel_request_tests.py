@@ -1,32 +1,45 @@
+from typing import List
+
 import jsondiff
 import requests
 import unittest
 
+import urllib3
 
-# class TestJa3erRequest(unittest.TestCase):
-#
-#     def setUp(self) -> None:
-#         pass
-#
-#     def test_tunnel_request(self):
-#         response_json: dict = None
-#         validation_json: dict = {
-#             'ja3_hash': 'b32309a26951912be7dba376398abc3b',
-#             'ja3': '771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-21,29-23-24,0',
-#             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36'
-#         }
-#         # todo: check difference
-#
-#         differce = jsondiff.diff(validation_json, response_json)
+from tls_tunnel.adapter import prepare_http_adapter
+from tls_tunnel.dto import TunnelOptions
 
 
 class TestHowsMySSLRequest(unittest.TestCase):
 
     def setUp(self) -> None:
-        pass
+        self.tunnel_opts = TunnelOptions(
+            host="104.248.43.30",
+            port=1337,
+            auth_login="test1",
+            auth_password="467jw2d53x82FAGHSw",
+            header_secure=True,
+
+        )
+
+        self.adapter = prepare_http_adapter(
+            tunnel_opts=self.tunnel_opts,
+            dest_host="howsmyssl.com",
+            dest_port=443,
+        )
+        self.session = requests.Session()
+        self.session.headers.update(urllib3.make_headers(
+            keep_alive=True,
+            disable_cache=True,
+            accept_encoding=True,
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36'
+        ))
 
     def test_tunnel_request(self):
-        response_json: dict = None
+        self.session.mount("http://", self.adapter)
+        self.session.mount("https://", self.adapter)
+
+        response_json: dict = self.session.get('https://www.howsmyssl.com/a/check').json()
         validation_json: dict = {
             'given_cipher_suites': [
                 'TLS_GREASE_IS_THE_WORD_AA',
@@ -56,8 +69,13 @@ class TestHowsMySSLRequest(unittest.TestCase):
             'tls_version': 'TLS 1.3',
             'rating': 'Probably Okay'}
 
-        differce = jsondiff.diff(validation_json, response_json)
-        # self.assertIn()
+        diff: dict = jsondiff.diff(validation_json, response_json)
+        given_cipher_suites: List[str] = diff["given_cipher_suites"]
+
+        self.assertEqual(len(given_cipher_suites[jsondiff.symbols.insert]), 1,
+                         msg="[given_cipher_suites] TLS_GREASE_IS INSERT parameter check failed.")
+        self.assertEqual(len(given_cipher_suites[jsondiff.symbols.delete]), 1,
+                         msg="[given_cipher_suites] TLS_GREASE_IS DELETE parameter check failed.")
 
 
 if __name__ == '__main__':
