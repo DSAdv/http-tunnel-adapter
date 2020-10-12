@@ -51,3 +51,48 @@ session = Session()
 session.mount("http://", self.adapter)
 session.mount("https://", self.adapter)
 ```
+
+Request to `howsmyssl.com`:
+```python
+response = session.get('https://www.howsmyssl.com/a/check')
+```
+Output:
+```python
+# response.status_code
+200
+
+# response.headers
+{'Content-Length': '874', 
+ 'Access-Control-Allow-Origin': '*', 
+ 'Connection': 'close', 
+ 'Content-Type': 'application/json', 
+ 'Date': 'Mon, 12 Oct 2020 21:55:42 GMT', 
+ 'Strict-Transport-Security': 'max-age=631138519; includeSubdomains; preload'}
+
+# response.json()
+{'able_to_detect_n_minus_one_splitting': False,
+ 'beast_vuln': False,
+ 'ephemeral_keys_supported': True,
+ 'given_cipher_suites': ['TLS_GREASE_IS_THE_WORD_2A',
+                         'TLS_AES_128_GCM_SHA256',
+                         'TLS_AES_256_GCM_SHA384',
+                         'TLS_CHACHA20_POLY1305_SHA256',
+                         'TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256',
+                         'TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256',
+                         'TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384',
+                         'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384',
+                         'TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256',
+                         'TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256',
+                         'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA',
+                         'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA',
+                         'TLS_RSA_WITH_AES_128_GCM_SHA256',
+                         'TLS_RSA_WITH_AES_256_GCM_SHA384',
+                         'TLS_RSA_WITH_AES_128_CBC_SHA',
+                         'TLS_RSA_WITH_AES_256_CBC_SHA'],
+ 'insecure_cipher_suites': {},
+ 'rating': 'Probably Okay',
+ 'session_ticket_supported': True,
+ 'tls_compression_supported': False,
+ 'tls_version': 'TLS 1.3',
+ 'unknown_cipher_suite_supported': False}
+```
