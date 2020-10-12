@@ -1,3 +1,4 @@
+from random import choice
 from typing import List
 
 import jsondiff
@@ -6,7 +7,7 @@ import unittest
 
 import urllib3
 
-from tls_tunnel.adapter import prepare_http_adapter
+from tls_tunnel.adapter import TunneledHTTPAdapter
 from tls_tunnel.dto import TunnelOptions
 
 
@@ -21,8 +22,7 @@ class TestHowsMySSLRequest(unittest.TestCase):
             header_secure=True,
 
         )
-
-        self.adapter = prepare_http_adapter(
+        self.adapter = TunneledHTTPAdapter(
             tunnel_opts=self.tunnel_opts,
             dest_host="howsmyssl.com",
             dest_port=443,
@@ -35,10 +35,11 @@ class TestHowsMySSLRequest(unittest.TestCase):
             user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36'
         ))
 
-    def test_tunnel_request(self):
+        # connect adapter for requests.Session instance
         self.session.mount("http://", self.adapter)
         self.session.mount("https://", self.adapter)
 
+    def test_tunnel_request(self):
         response_json: dict = self.session.get('https://www.howsmyssl.com/a/check').json()
         validation_json: dict = {
             'given_cipher_suites': [
@@ -76,6 +77,16 @@ class TestHowsMySSLRequest(unittest.TestCase):
                          msg="[given_cipher_suites] TLS_GREASE_IS INSERT parameter check failed.")
         self.assertEqual(len(given_cipher_suites[jsondiff.symbols.delete]), 1,
                          msg="[given_cipher_suites] TLS_GREASE_IS DELETE parameter check failed.")
+
+    def test_several_tunnel_requests(self):
+
+        for url in ["https://www.howsmyssl.com/",
+                    "https://www.howsmyssl.com/s/about.html"]:
+            response = self.session.get(url)
+            self.assertEqual(response.status_code, 200)
+
+        failed_response = self.session.get("https://www.howsmyssl.com/s/api")
+        self.assertEqual(failed_response.status_code, 404)
 
 
 if __name__ == '__main__':
